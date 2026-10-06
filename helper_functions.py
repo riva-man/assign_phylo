@@ -70,11 +70,40 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
         A root node of the neighbor joining tree.
 
     """
+    converge = False
+
+    while (converge == False):
+        # implement neighbour joining until converse
+
     
-    self.tree = Node()
+    # self.tree = Node()
 
-    raise NotImplementedError()
+    # raise NotImplementedError()
 
+def add_rows(distances, labels):
+    n = len(distances)
+    sum_column = np.array()
+
+    for i in range(n):
+        total = 0
+        for j in range(n):
+            total += distances[i][j]
+        sum_column = np.append(sum_column, total)
+
+    d_array = np.column_stack(distances, sum_column)
+
+    return d_array
+
+def table_Q(d_array, labels):
+    n = len(labels)
+    q_array = np.zeros(n, n)
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            q_array[i][j] = (n-2) * d_array[i][j] - d_array[i][n] - d_array[i + 1][n]
+            q_array[j][i] = q_array[i][j]
+
+    print(q_array)
 
 def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
     """A function for plotting neighbor joining phylogeny dendrogram.
