@@ -71,9 +71,33 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
 
     """
     converge = False
-
+    i = 0
     while (converge == False):
-        # implement neighbour joining until converse
+        add_distance = add_rows(distances, labels)
+        Q_table = table_Q(add_distance, labels)
+        min_index = np.argmin(Q_table)
+        row, col = np.unravel_index(min_index, Q_table.shape)
+        
+        taxon_1 = labels[row]
+        taxon_2 = labels[col]
+        
+        new_label = labels.copy()
+
+        new_label.remove(taxon_1)
+        new_label.remove(taxon_2)
+        new_label.insert(0, taxon_1 + taxon_2)
+
+        print(new_label)
+
+        distances = new_distance(add_distance, new_label, labels, row, col)
+        labels = new_label
+
+        # still need to get distance to each!! ================================
+        if (len(labels) == 2):
+            converge = True
+
+        
+        
 
     
     # self.tree = Node()
@@ -81,8 +105,13 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
     # raise NotImplementedError()
 
 def add_rows(distances, labels):
-    n = len(distances)
-    sum_column = np.array()
+    n = len(labels)
+    sum_column = []
+
+    for i in range(n):
+            for j in range(i + 1, n):
+                distances[j][i] = distances[i][j]
+    # print(distances)
 
     for i in range(n):
         total = 0
@@ -90,20 +119,39 @@ def add_rows(distances, labels):
             total += distances[i][j]
         sum_column = np.append(sum_column, total)
 
-    d_array = np.column_stack(distances, sum_column)
+    d_array = np.column_stack((distances, sum_column))
+    # print(d_array)
 
-    return d_array
+    return(d_array)
 
 def table_Q(d_array, labels):
     n = len(labels)
-    q_array = np.zeros(n, n)
+    q_array = np.zeros((n, n))
 
     for i in range(n):
         for j in range(i + 1, n):
             q_array[i][j] = (n-2) * d_array[i][j] - d_array[i][n] - d_array[i + 1][n]
             q_array[j][i] = q_array[i][j]
 
-    print(q_array)
+    # print(q_array)
+
+    return(q_array)
+
+def new_distance(d_array, new_labels, old_labels, row, col):
+    n = len(new_labels)
+
+    new_distance = np.zeros((n, n))
+    dist = d_array[row][col]
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            old_index = old_labels.index(new_labels[j])
+
+            new_distance[i][j] = 1/2 * (d_array[row][old_index] + d_array[col][old_index] - dist)
+            new_distance[j][i] = new_distance[i][j]
+
+    # print(new_distance)
+    return(new_distance)
 
 def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
     """A function for plotting neighbor joining phylogeny dendrogram.
