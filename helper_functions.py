@@ -70,84 +70,126 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
         A root node of the neighbor joining tree.
 
     """
+    # Initialising leaf nodes
+    nodes = []
+    for label in labels:
+        nodes.append(Node(label, None, 0, None, 0))
+
+    # Loop through neighbour joining algorithm until we reach convergence
     converge = False
-    i = 0
     while (converge == False):
+        # New array with the sum of each row
         add_distance = add_rows(distances, labels)
+        # New array with Q values
         Q_table = table_Q(add_distance, labels)
+
+        # Getting the index of the minimum value from Q table
         min_index = np.argmin(Q_table)
         row, col = np.unravel_index(min_index, Q_table.shape)
         
         taxon_1 = labels[row]
         taxon_2 = labels[col]
-        
-        new_label = labels.copy()
 
+        # Creating a new label list based on joint taxons
+        new_label = labels.copy()
         new_label.remove(taxon_1)
         new_label.remove(taxon_2)
         new_label.insert(0, taxon_1 + taxon_2)
 
-        print(new_label)
+        # print(new_label)
 
+        
+        # Calculating distance and appending nodes
+        n = len(labels)
+        node_1_idx = find_node_index(nodes, taxon_1)
+        node_2_idx = find_node_index(nodes, taxon_2)
+        if (n == 2):
+            root = Node(taxon_1 + taxon_2, nodes[node_1_idx], distances[row][col]/2, nodes[node_2_idx], distances[row][col]/2)
+            nodes.append(root)
+            converge = True
+        else:
+            taxon_1_dis = 1/2*distances[row][col] + (1/(2*(n - 2))) * (add_distance[row][n] - add_distance[col][n])
+            taxon_2_dis = distances[row][col] - taxon_1_dis
+            nodes.append(Node(taxon_1 + taxon_2, nodes[node_1_idx], taxon_1_dis, nodes[node_2_idx], taxon_2_dis))
+            
         distances = new_distance(add_distance, new_label, labels, row, col)
         labels = new_label
-
-        # still need to get distance to each!! ================================
-        if (len(labels) == 2):
-            converge = True
-
-        
-        
-
     
-    # self.tree = Node()
+    # for node in nodes:
+    #     print("Name:", node.name, end=', ')
+    #     print("Left:", node.left, end=', ')
+    #     print("Left distance:", node.left_distance, end=', ')
+    #     print("Right:", node.right, end=', ')
+    #     print("Right distance:", node.right_distance)
+    return root
 
-    # raise NotImplementedError()
+def find_node_index(nodes, name):
+    i = 0
+    for node in nodes:
+        if node.name == name:
+            # print(i)
+            return i
+        i += 1
 
+# Function that takes in distance matrix and returns a table with an extra
+# column that holds the sum of each row
 def add_rows(distances, labels):
     n = len(labels)
     sum_column = []
 
+    # Ensuring distance matrix is symmetric
     for i in range(n):
             for j in range(i + 1, n):
                 distances[j][i] = distances[i][j]
     # print(distances)
 
+    # Getting sum of each column and storing each value 
     for i in range(n):
         total = 0
         for j in range(n):
             total += distances[i][j]
         sum_column = np.append(sum_column, total)
 
+    # Adding the extra column
     d_array = np.column_stack((distances, sum_column))
-    # print(d_array)
 
     return(d_array)
 
+# Function that takes in a distance array with an extra column with the sum for
+# each row, and returns a new table with Q values calculated
 def table_Q(d_array, labels):
     n = len(labels)
     q_array = np.zeros((n, n))
 
     for i in range(n):
         for j in range(i + 1, n):
-            q_array[i][j] = (n-2) * d_array[i][j] - d_array[i][n] - d_array[i + 1][n]
+            q_array[i][j] = (n-2) * d_array[i][j] - d_array[i][n] - d_array[j][n]
             q_array[j][i] = q_array[i][j]
 
     # print(q_array)
-
     return(q_array)
 
+# Function that takes in a distance array, new labels, old labels, and the
+# row and column of minimum value from Q table. 
+# A new distance table is calculated and returned
 def new_distance(d_array, new_labels, old_labels, row, col):
     n = len(new_labels)
 
     new_distance = np.zeros((n, n))
     dist = d_array[row][col]
 
-    for i in range(n):
-        for j in range(i + 1, n):
-            old_index = old_labels.index(new_labels[j])
+    for i in range(1, n):
+        old_index = old_labels.index(new_labels[i])
 
-            new_distance[i][j] = 1/2 * (d_array[row][old_index] + d_array[col][old_index] - dist)
+        new_distance[0][i] = 1/2 * (d_array[row][old_index] + d_array[col][old_index] - dist)
+        new_distance[i][0] = new_distance[0][i]
+
+    for i in range(1, n):
+        for j in range(i + 1, n):
+            old_i = old_labels.index(new_labels[i])
+            old_j = old_labels.index(new_labels[j])
+
+            new_distance[i][j] = d_array[old_i][old_j]
             new_distance[j][i] = new_distance[i][j]
 
     # print(new_distance)
