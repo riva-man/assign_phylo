@@ -94,11 +94,10 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
         new_label = labels.copy()
         new_label.remove(taxon_1)
         new_label.remove(taxon_2)
-        new_label.insert(0, taxon_1 + taxon_2)
+        new_label.append(taxon_1 + taxon_2)
 
         # print(new_label)
 
-        
         # Calculating distance and appending nodes
         n = len(labels)
         node_1_idx = find_node_index(nodes, taxon_1)
@@ -178,14 +177,14 @@ def new_distance(d_array, new_labels, old_labels, row, col):
     new_distance = np.zeros((n, n))
     dist = d_array[row][col]
 
-    for i in range(1, n):
+    for i in range(n - 1):
         old_index = old_labels.index(new_labels[i])
 
-        new_distance[0][i] = 1/2 * (d_array[row][old_index] + d_array[col][old_index] - dist)
-        new_distance[i][0] = new_distance[0][i]
+        new_distance[n - 1][i] = 1/2 * (d_array[row][old_index] + d_array[col][old_index] - dist)
+        new_distance[i][n - 1] = new_distance[n - 1][i]
 
-    for i in range(1, n):
-        for j in range(i + 1, n):
+    for i in range(n - 1):
+        for j in range(i + 1, n - 1):
             old_i = old_labels.index(new_labels[i])
             old_j = old_labels.index(new_labels[j])
 
