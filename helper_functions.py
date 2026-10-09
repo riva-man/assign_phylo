@@ -2,6 +2,7 @@
 import numpy as np
 from copy import deepcopy
 from matplotlib.axes import Axes
+import matplotlib.pyplot as plt
 
 
 class Node:
@@ -96,8 +97,6 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
         new_label.remove(taxon_2)
         new_label.append(taxon_1 + taxon_2)
 
-        # print(new_label)
-
         # Calculating distance and appending nodes
         n = len(labels)
         node_1_idx = find_node_index(nodes, taxon_1)
@@ -110,7 +109,8 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
             taxon_1_dis = 1/2*distances[row][col] + (1/(2*(n - 2))) * (add_distance[row][n] - add_distance[col][n])
             taxon_2_dis = distances[row][col] - taxon_1_dis
             nodes.append(Node(taxon_1 + taxon_2, nodes[node_1_idx], taxon_1_dis, nodes[node_2_idx], taxon_2_dis))
-            
+
+        # Updating distance matrix and labels for next iteration  
         distances = new_distance(add_distance, new_label, labels, row, col)
         labels = new_label
     
@@ -122,11 +122,12 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
     #     print("Right distance:", node.right_distance)
     return root
 
+# Function that finds the index of a node when a list of nodes and the name
+# searching for is passed in
 def find_node_index(nodes, name):
     i = 0
     for node in nodes:
         if node.name == name:
-            # print(i)
             return i
         i += 1
 
@@ -136,11 +137,10 @@ def add_rows(distances, labels):
     n = len(labels)
     sum_column = []
 
-    # Ensuring distance matrix is symmetric
+    # Ensuring distance matrix is symmetric (assuming top half is filled)
     for i in range(n):
             for j in range(i + 1, n):
                 distances[j][i] = distances[i][j]
-    # print(distances)
 
     # Getting sum of each column and storing each value 
     for i in range(n):
@@ -165,7 +165,6 @@ def table_Q(d_array, labels):
             q_array[i][j] = (n-2) * d_array[i][j] - d_array[i][n] - d_array[j][n]
             q_array[j][i] = q_array[i][j]
 
-    # print(q_array)
     return(q_array)
 
 # Function that takes in a distance array, new labels, old labels, and the
@@ -191,7 +190,6 @@ def new_distance(d_array, new_labels, old_labels, row, col):
             new_distance[i][j] = d_array[old_i][old_j]
             new_distance[j][i] = new_distance[i][j]
 
-    # print(new_distance)
     return(new_distance)
 
 def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
@@ -217,9 +215,27 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
     >>> fig.savefig("example.png")
 
     """
+    if tree is None:
+        return
 
+    stack = [tree]
+
+    while stack:
+        curr_node = stack.pop()
+
+        if curr_node.left:
+            stack.append(curr_node.left)
+            print(curr_node.name, curr_node.left_distance, curr_node.right_distance)
+
+        if curr_node.right:
+            stack.append(curr_node.right)
+            print(curr_node.name, curr_node.left_distance, curr_node.right_distance)
+
+        if curr_node.left is None and curr_node.right is None:
+            print(f"LEAF:{curr_node.name}")
+            
     return ax
-
+    
 
 def _find_a_parent_to_node(tree: Node, node: Node) -> tuple:
     """Utility function for reroot_tree"""
