@@ -114,22 +114,7 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
         distances = new_distance(add_distance, new_label, labels, row, col)
         labels = new_label
     
-    # for node in nodes:
-    #     print("Name:", node.name, end=', ')
-    #     print("Left:", node.left, end=', ')
-    #     print("Left distance:", node.left_distance, end=', ')
-    #     print("Right:", node.right, end=', ')
-    #     print("Right distance:", node.right_distance)
     return root
-
-# Function that finds the index of a node when a list of nodes and the name
-# searching for is passed in
-def find_node_index(nodes, name):
-    i = 0
-    for node in nodes:
-        if node.name == name:
-            return i
-        i += 1
 
 # Function that takes in distance matrix and returns a table with an extra
 # column that holds the sum of each row
@@ -166,6 +151,15 @@ def table_Q(d_array, labels):
             q_array[j][i] = q_array[i][j]
 
     return(q_array)
+
+# Function that finds the index of a node when a list of nodes and the name
+# searching for is passed in
+def find_node_index(nodes, name):
+    i = 0
+    for node in nodes:
+        if node.name == name:
+            return i
+        i += 1
 
 # Function that takes in a distance array, new labels, old labels, and the
 # row and column of minimum value from Q table. 
@@ -216,33 +210,42 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
 
     """
     tree_traversal(ax, tree, 0, (0.5, 5), 4)
-    
     return ax
 
+# Function that recursively traverses from root to draw phylogenetic tree
 def tree_traversal(ax, node, curr_x, curr_coord, height):
     if node is None:
         return
 
     # Printing leaf/taxonomy
     if node.left is None and node.right is None:
-        print(f"LEAF: {node.name}, {curr_x}, {curr_coord}")
+        y_pos = curr_coord[0] + ((curr_coord[1] - curr_coord[0])/2)
+        ax.text(curr_x + 0.2, y_pos - 0.2, node.name)
         return
 
-    # Printing vertical lines
-    print(node.name, curr_x, curr_coord)
+    # Printing vertical line
+    ax.vlines(x=curr_x, ymin = curr_coord[0], ymax = curr_coord[1], color='black')
+
+    # Recalculating distance of vertical lines
     height = height * 0.5
 
-    # Traversing left
+    # Traversing left, printing horizontal line according to distance and 
+    # recalculating vertical distances
     if node.left:
-        new_left = (curr_coord[1] - height, curr_coord[1] + height)
+        ax.text(curr_x + 0.1, curr_coord[1] + 0.1, node.left_distance, fontsize=5)
+        ax.hlines(y=curr_coord[1], xmin=curr_x, xmax=curr_x + node.left_distance, color='black')
 
+        new_left = (curr_coord[1] - height, curr_coord[1] + height)
         tree_traversal(ax, node.left, curr_x + node.left_distance, new_left, height)
 
-    # Traversing right
+    # Traversing right, printing horizontal line according to distance and 
+    # recalculating vertical distances
     if node.right:
+        ax.text(curr_x + 0.1, curr_coord[0] + 0.1, node.right_distance, fontsize=5)
+        ax.hlines(y=curr_coord[0], xmin=curr_x, xmax=curr_x + node.right_distance, color='black')
+
         new_right = (curr_coord[0] - height, curr_coord[0] + height)
         tree_traversal(ax, node.right, curr_x + node.right_distance, new_right, height)
-
     
 
 def _find_a_parent_to_node(tree: Node, node: Node) -> tuple:
