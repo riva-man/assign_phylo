@@ -215,20 +215,33 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
     >>> fig.savefig("example.png")
 
     """
-    tree_traversal(tree)
+    tree_traversal(ax, tree, 0, (0.5, 5), 4)
     
     return ax
 
-def tree_traversal(node):
+def tree_traversal(ax, node, curr_x, curr_coord, height):
     if node is None:
         return
 
+    # Printing leaf/taxonomy
     if node.left is None and node.right is None:
-        print(f"LEAF: {node.name}")
-    else:
-        print(node.name, node.left_distance, node.right_distance)
-    tree_traversal(node.left)
-    tree_traversal(node.right)
+        print(f"LEAF: {node.name}, {curr_x}, {curr_coord}")
+        return
+
+    # Printing vertical lines
+    print(node.name, curr_x, curr_coord)
+    height = height * 0.5
+
+    # Traversing left
+    if node.left:
+        new_left = (curr_coord[1] - height, curr_coord[1] + height)
+
+        tree_traversal(ax, node.left, curr_x + node.left_distance, new_left, height)
+
+    # Traversing right
+    if node.right:
+        new_right = (curr_coord[0] - height, curr_coord[0] + height)
+        tree_traversal(ax, node.right, curr_x + node.right_distance, new_right, height)
 
     
 
