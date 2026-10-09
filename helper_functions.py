@@ -209,7 +209,7 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
     >>> fig.savefig("example.png")
 
     """
-    tree_traversal(ax, tree, 0, (0.5, 5), 4)
+    tree_traversal(ax, tree, 0, (0.5, 1000), 998)
     return ax
 
 # Function that recursively traverses from root to draw phylogenetic tree
