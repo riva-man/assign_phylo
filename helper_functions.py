@@ -215,26 +215,21 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
     >>> fig.savefig("example.png")
 
     """
-    if tree is None:
+    tree_traversal(tree)
+    
+    return ax
+
+def tree_traversal(node):
+    if node is None:
         return
 
-    stack = [tree]
+    if node.left is None and node.right is None:
+        print(f"LEAF: {node.name}")
+    else:
+        print(node.name, node.left_distance, node.right_distance)
+    tree_traversal(node.left)
+    tree_traversal(node.right)
 
-    while stack:
-        curr_node = stack.pop()
-
-        if curr_node.left:
-            stack.append(curr_node.left)
-            print(curr_node.name, curr_node.left_distance, curr_node.right_distance)
-
-        if curr_node.right:
-            stack.append(curr_node.right)
-            print(curr_node.name, curr_node.left_distance, curr_node.right_distance)
-
-        if curr_node.left is None and curr_node.right is None:
-            print(f"LEAF:{curr_node.name}")
-            
-    return ax
     
 
 def _find_a_parent_to_node(tree: Node, node: Node) -> tuple:
