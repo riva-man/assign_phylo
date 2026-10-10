@@ -220,19 +220,18 @@ def tree_traversal(ax, node, curr_x, curr_coord, height):
     # Printing leaf/taxonomy
     if node.left is None and node.right is None:
         y_pos = curr_coord[0] + ((curr_coord[1] - curr_coord[0])/2)
-        ax.text(curr_x + 0.2, y_pos - 0.2, node.name)
+        ax.text(curr_x + 0.2, y_pos - 0.3, node.name, fontsize=7)
         return
 
     # Printing vertical line
     ax.vlines(x=curr_x, ymin = curr_coord[0], ymax = curr_coord[1], color='black')
 
     # Recalculating distance of vertical lines
-    height = height * 0.5
+    height = height * 0.8
 
     # Traversing left, printing horizontal line according to distance and 
     # recalculating vertical distances
     if node.left:
-        ax.text(curr_x + 0.1, curr_coord[1] + 0.1, node.left_distance, fontsize=5)
         ax.hlines(y=curr_coord[1], xmin=curr_x, xmax=curr_x + node.left_distance, color='black')
 
         new_left = (curr_coord[1] - height, curr_coord[1] + height)
@@ -241,7 +240,6 @@ def tree_traversal(ax, node, curr_x, curr_coord, height):
     # Traversing right, printing horizontal line according to distance and 
     # recalculating vertical distances
     if node.right:
-        ax.text(curr_x + 0.1, curr_coord[0] + 0.1, node.right_distance, fontsize=5)
         ax.hlines(y=curr_coord[0], xmin=curr_x, xmax=curr_x + node.right_distance, color='black')
 
         new_right = (curr_coord[0] - height, curr_coord[0] + height)
@@ -338,9 +336,48 @@ def sort_children_by_leaves(tree: Node) -> None:
         The root node of the tree.
 
     """
-    raise NotImplementedError()
+    if tree is None:
+        return
 
+    # Getting sum of left and right children
+    sum_l = 0
+    sum_r = 0
+    if tree.left:
+        sum_l = leaf_count(tree.left)
+    if tree.right:
+        sum_r = leaf_count(tree.right)
 
+    # If left child has more leaves than right, swap in place
+    if sum_l > sum_r:
+        curr_r = tree.right
+        curr_r_dist = tree.right_distance
+
+        tree.right = tree.left
+        tree.right_distance = tree.left_distance
+
+        tree.left = curr_r
+        tree.left_distance = curr_r_dist
+
+    # Recurse through tree to swap children
+    sort_children_by_leaves(tree.left)
+    sort_children_by_leaves(tree.right)
+    return tree
+
+# Function that returns the sum of leaves from recursive search on left and 
+# right children
+def leaf_count(node):
+    if node.left is None and node.right is None:
+        return 1
+
+    sum_l = 0
+    sum_r = 0
+    if node.left:
+        sum_l = leaf_count(node.left)
+    if node.right:
+        sum_r = leaf_count(node.right)
+
+    return sum_l + sum_r
+    
 def plot_nj_tree_radial(tree: Node, ax: Axes = None, **kwargs) -> None:
     """A function for plotting neighbor joining phylogeny dendrogram
     with a radial layout.
