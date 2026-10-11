@@ -3,6 +3,7 @@ import numpy as np
 from copy import deepcopy
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 
 class Node:
@@ -186,7 +187,7 @@ def new_distance(d_array, new_labels, old_labels, row, col):
 
     return(new_distance)
 
-def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
+def plot_nj_tree(tree: Node, ax: Axes = None, subgroups = None) -> None:
     """A function for plotting neighbor joining phylogeny dendrogram.
 
     Parameters
@@ -217,14 +218,29 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
     while len(stack) > 0:
         curr_node, curr_x = stack.pop()
 
-        # Printing leaf/taxonomy name
+        # Printing leaf/taxonomy name and colouring according to subgroup
         if curr_node.left is None and curr_node.right is None:
+            if subgroups is None:
+                sub_colour = 'black'
+            elif subgroups[curr_node.name] == 'Alphacoronavirus':
+                sub_colour = 'crimson'
+            elif subgroups[curr_node.name] == 'Betacoronavirus':
+                sub_colour = 'darkblue'
+            elif subgroups[curr_node.name] == 'Gammacoronavirus':
+                sub_colour = 'darkgreen'
+            elif subgroups[curr_node.name] == 'Deltacoronavirus':
+                sub_colour = 'darkorange'
+            else:
+                sub_colour = 'blueviolet'
+
             ax.text(
                 curr_x + 0.1, 
                 positions[curr_node.name] - 0.1, 
-                curr_node.name, fontsize=7
+                curr_node.name, 
+                fontsize=10,
+                color=sub_colour
             )
-        
+
         # Printing vertical line
         else:
             ax.vlines(
@@ -253,6 +269,18 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
             )
             stack.append((curr_node.right, curr_x + curr_node.right_distance))
 
+    if subgroups is not None:
+        handles = []
+        handles.append(mpatches.Patch(color='crimson', label='Alphacoronavirus'))
+        handles.append(mpatches.Patch(color='darkblue', label='Betacoronavirus'))
+        handles.append(mpatches.Patch(color='darkgreen', label='Gammacoronavirus'))
+        handles.append(mpatches.Patch(color='darkorange', label='Deltacoronavirus'))
+        handles.append(mpatches.Patch(color='blueviolet', label='Others'))
+
+        ax.legend(handles=handles, title="MAJOR GROUPS", loc='lower left')
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     return ax
 
 # Function that counts leaves left to right to assign y_position
