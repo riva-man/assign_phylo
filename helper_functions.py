@@ -209,42 +209,96 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
     >>> fig.savefig("example.png")
 
     """
-    tree_traversal(ax, tree, 0, (0.5, 1000), 998)
+    leaves = count_leaves(tree)
+    positions = {}
+    position_nodes(tree, leaves, positions)
+
+    stack = [(tree, 0)]        
+    while len(stack) > 0:
+        curr_node, curr_x = stack.pop()
+
+        # Printing leaf/taxonomy name
+        if curr_node.left is None and curr_node.right is None:
+            ax.text(
+                curr_x + 0.1, 
+                positions[curr_node.name] - 0.1, 
+                curr_node.name, fontsize=7
+            )
+        
+        # Printing vertical line
+        else:
+            ax.vlines(
+                x=curr_x, 
+                ymin = positions[curr_node.right.name], 
+                ymax = positions[curr_node.left.name], 
+                color='black'
+            )
+
+        # Print horizontal line for node left and right according to distance 
+        # and append stack with new x_position
+        if curr_node.left:
+            ax.hlines(
+                y=positions[curr_node.left.name], 
+                xmin=curr_x, 
+                xmax=curr_x + curr_node.left_distance, 
+                color='black'
+            )
+            stack.append((curr_node.left, curr_x + curr_node.left_distance))
+        if curr_node.right:
+            ax.hlines(
+                y=positions[curr_node.right.name], 
+                xmin=curr_x, 
+                xmax=curr_x + curr_node.right_distance, 
+                color='black'
+            )
+            stack.append((curr_node.right, curr_x + curr_node.right_distance))
+
     return ax
 
-# Function that recursively traverses from root to draw phylogenetic tree
-def tree_traversal(ax, node, curr_x, curr_coord, height):
-    if node is None:
-        return
+# Function that counts leaves left to right to assign y_position
+# returns a dict with information stored
+def count_leaves(tree):
+    stack = [tree]
 
-    # Printing leaf/taxonomy
+    leaves = {}
+    i = 0
+    while len(stack) > 0:
+        curr_node = stack.pop()
+        
+        if curr_node.left:
+            stack.append(curr_node.left)
+        if curr_node.right:
+            stack.append(curr_node.right)
+
+        # If leaf value reached, update dict with incremental y_positions
+        if curr_node.left is None and curr_node.right is None:
+            leaves[curr_node.name] = i
+            i += 2
+
+    return leaves
+
+# Function that recursively updates position dict in order to store y_position
+# for every node
+def position_nodes(node, leaves, pos):
+    # If leaf/taxonomy reached, update position dict with values and return its'
+    # y_position
     if node.left is None and node.right is None:
-        y_pos = curr_coord[0] + ((curr_coord[1] - curr_coord[0])/2)
-        ax.text(curr_x + 0.2, y_pos - 0.3, node.name, fontsize=7)
-        return
+        pos[node.name] = leaves[node.name]
+        return pos[node.name]
 
-    # Printing vertical line
-    ax.vlines(x=curr_x, ymin = curr_coord[0], ymax = curr_coord[1], color='black')
-
-    # Recalculating distance of vertical lines
-    height = height * 0.8
-
-    # Traversing left, printing horizontal line according to distance and 
-    # recalculating vertical distances
+    # Recursively getting left and right y_positions
+    sum_l = 0
+    sum_r = 0
     if node.left:
-        ax.hlines(y=curr_coord[1], xmin=curr_x, xmax=curr_x + node.left_distance, color='black')
-
-        new_left = (curr_coord[1] - height, curr_coord[1] + height)
-        tree_traversal(ax, node.left, curr_x + node.left_distance, new_left, height)
-
-    # Traversing right, printing horizontal line according to distance and 
-    # recalculating vertical distances
+        sum_l = position_nodes(node.left, leaves, pos)
     if node.right:
-        ax.hlines(y=curr_coord[0], xmin=curr_x, xmax=curr_x + node.right_distance, color='black')
+        sum_r = position_nodes(node.right, leaves, pos)
 
-        new_right = (curr_coord[0] - height, curr_coord[0] + height)
-        tree_traversal(ax, node.right, curr_x + node.right_distance, new_right, height)
-    
+    # Positioning the current node as half way between left and right childrens'
+    # y_position
+    pos[node.name] = (sum_l + sum_r)/2
+
+    return pos[node.name]        
 
 def _find_a_parent_to_node(tree: Node, node: Node) -> tuple:
     """Utility function for reroot_tree"""
