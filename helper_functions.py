@@ -102,14 +102,28 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
         n = len(labels)
         node_1_idx = find_node_index(nodes, taxon_1)
         node_2_idx = find_node_index(nodes, taxon_2)
+        # If we have 2 nodes left, create root
         if (n == 2):
-            root = Node(taxon_1 + taxon_2, nodes[node_1_idx], distances[row][col]/2, nodes[node_2_idx], distances[row][col]/2)
+            root = Node(
+                taxon_1 + taxon_2, 
+                nodes[node_1_idx], 
+                distances[row][col]/2, 
+                nodes[node_2_idx], 
+                distances[row][col]/2
+            )
             nodes.append(root)
             converge = True
+        # Otherwise get distances to each taxon and add to nodes list
         else:
             taxon_1_dis = 1/2*distances[row][col] + (1/(2*(n - 2))) * (add_distance[row][n] - add_distance[col][n])
             taxon_2_dis = distances[row][col] - taxon_1_dis
-            nodes.append(Node(taxon_1 + taxon_2, nodes[node_1_idx], taxon_1_dis, nodes[node_2_idx], taxon_2_dis))
+            nodes.append(Node(
+                taxon_1 + taxon_2, 
+                nodes[node_1_idx], 
+                taxon_1_dis, 
+                nodes[node_2_idx], 
+                taxon_2_dis
+            ))
 
         # Updating distance matrix and labels for next iteration  
         distances = new_distance(add_distance, new_label, labels, row, col)
@@ -171,12 +185,14 @@ def new_distance(d_array, new_labels, old_labels, row, col):
     new_distance = np.zeros((n, n))
     dist = d_array[row][col]
 
+    # Getting new distance values for joined node
     for i in range(n - 1):
         old_index = old_labels.index(new_labels[i])
 
         new_distance[n - 1][i] = 1/2 * (d_array[row][old_index] + d_array[col][old_index] - dist)
         new_distance[i][n - 1] = new_distance[n - 1][i]
 
+    # Copying over all other distance values that weren't changed
     for i in range(n - 1):
         for j in range(i + 1, n - 1):
             old_i = old_labels.index(new_labels[i])
@@ -251,7 +267,7 @@ def plot_nj_tree(tree: Node, ax: Axes = None, subgroups = None) -> None:
             )
 
         # Print horizontal line for node left and right according to distance 
-        # and append stack with new x_position
+        # and append it to stack with new x_position
         if curr_node.left:
             ax.hlines(
                 y=positions[curr_node.left.name], 
@@ -269,6 +285,7 @@ def plot_nj_tree(tree: Node, ax: Axes = None, subgroups = None) -> None:
             )
             stack.append((curr_node.right, curr_x + curr_node.right_distance))
 
+    # Printing a legend if required
     if subgroups is not None:
         handles = []
         handles.append(mpatches.Patch(color='crimson', label='Alphacoronavirus'))
@@ -283,8 +300,9 @@ def plot_nj_tree(tree: Node, ax: Axes = None, subgroups = None) -> None:
     ax.spines['right'].set_visible(False)
     return ax
 
-# Function that counts leaves left to right to assign y_position
+# Function that counts leaves "left to right" to assign y_position
 # returns a dict with information stored
+# For plotting with a "bottom up" approach
 def count_leaves(tree):
     stack = [tree]
 
@@ -307,6 +325,7 @@ def count_leaves(tree):
 
 # Function that recursively updates position dict in order to store y_position
 # for every node
+# Similar approach to leaf counting algorithm
 def position_nodes(node, leaves, pos):
     # If leaf/taxonomy reached, update position dict with values and return its'
     # y_position
